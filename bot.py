@@ -21,7 +21,7 @@ threading.Thread(target=start_server, daemon=True).start()
 
 TELEGRAM_TOKEN = "8857229938:AAF0BCtGKij335kPgGtMWQcBGVbr8Nw9DJI"
 CHAT_ID = "5048896288"
-ANTHROPIC_API_KEY = "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"
+ANTHROPIC_API_KEY = ""
 
 PAIRS = ["XAUUSD", "EURAUD", "USDJPY", "USDCAD", "GBPJPY", "GBPCAD", "GBPAUD"]
 
