@@ -1,87 +1,61 @@
 import os
 import requests
 import anthropic
-from telegram import Bot
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import asyncio
+import time
 
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
-CHAT_ID = os.environ.get("CHAT_ID")
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+TELEGRAM_TOKEN = "8857229938:AAF0BCtGKij335kPgGtMWQcBGVbr8Nw9DJI"
+CHAT_ID = "5048896288"
+ANTHROPIC_API_KEY = os.environ.get("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")
 
 PAIRS = ["XAUUSD", "EURAUD", "USDJPY", "USDCAD", "GBPJPY", "GBPCAD", "GBPAUD"]
 
-client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+def send_telegram(text):
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    data = {"chat_id": CHAT_ID, "text": text}
+    response = requests.post(url, data=data)
+    print(response.json())
+    return response
 
-async def analyze_pair(pair):
+def analyze_pair(pair):
+    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     message = client.messages.create(
         model="claude-sonnet-4-20250514",
-        max_tokens=500,
+        max_tokens=300,
         messages=[{
             "role": "user",
-            "content": f"""You are a professional SMC forex trader. Analyze {pair} right now.
-            
-Give a SHORT signal in this exact format:
+            "content": f"""Analyze {pair} for day trading right now. Give signal in this format:
 PAIR: {pair}
 SIGNAL: BUY or SELL or WAIT
-BIAS: (1H trend direction)
-ENTRY: (price)
-SL: (price)
-TP1: (price)
-TP2: (price)
-REASON: (one line SMC reason - OB, BOS, sweep etc)
-
-Be realistic with current market prices. Only give BUY or SELL if setup is strong."""
+ENTRY: price
+SL: price
+TP1: price
+TP2: price
+REASON: one line SMC reason"""
         }]
     )
     return message.content[0].text
 
-async def send_signals():
-    bot = Bot(token=TELEGRAM_TOKEN)
-    await bot.send_message(
-        chat_id=CHAT_ID,
-        text="🔍 *Scanning 7 pairs...*",
-        parse_mode="Markdown"
-    )
+def run():
+    send_telegram("✅ FX Signal Bot is LIVE! Analyzing 7 pairs now...")
     
     for pair in PAIRS:
         try:
-            analysis = await analyze_pair(pair)
-            signal_line = ""
-            if "SIGNAL: BUY" in analysis:
-                signal_line = "🟢"
-            elif "SIGNAL: SELL" in analysis:
-                signal_line = "🔴"
+            print(f"Analyzing {pair}...")
+            analysis = analyze_pair(pair)
+            if "BUY" in analysis:
+                emoji = "🟢"
+            elif "SELL" in analysis:
+                emoji = "🔴"
             else:
-                signal_line = "⚪"
-            
-            await bot.send_message(
-                chat_id=CHAT_ID,
-                text=f"{signal_line}\n```\n{analysis}\n```",
-                parse_mode="Markdown"
-            )
+                emoji = "⚪"
+            send_telegram(f"{emoji} {analysis}")
+            time.sleep(2)
         except Exception as e:
-            await bot.send_message(
-                chat_id=CHAT_ID,
-                text=f"❌ Error analyzing {pair}: {str(e)}"
-            )
+            print(f"Error {pair}: {e}")
+            send_telegram(f"❌ Error on {pair}: {str(e)}")
+    
+    send_telegram("✅ Analysis complete! Next update in 4 hours.")
 
-async def main():
-    bot = Bot(token=TELEGRAM_TOKEN)
-    await bot.send_message(
-        chat_id=CHAT_ID,
-        text="✅ *FX Signal Bot is LIVE!*\nI will scan all 7 pairs every 4 hours.\nSending first analysis now...",
-        parse_mode="Markdown"
-    )
-    
-    await send_signals()
-    
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(send_signals, 'interval', hours=4)
-    scheduler.start()
-    
-    while True:
-        await asyncio.sleep(3600)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+while True:
+    run()
+    time.sleep(14400)
