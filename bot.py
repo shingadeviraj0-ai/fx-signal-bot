@@ -51,7 +51,7 @@ def analyze_pair(pair, api_key):
     if "content" in result:
     return result["content"][0]["text"]
 else:
-    return f"API Error: {result}"
+    return str(result)
 def run():
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     print(f"API key found: {api_key is not None}")
