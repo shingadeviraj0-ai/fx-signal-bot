@@ -38,7 +38,7 @@ def analyze_pair(pair, api_key):
         "content-type": "application/json"
     }
     data = {
-        "model": "claude-haiku-4-5",
+        "model": "claude-haiku-4-5-20251001",
         "max_tokens": 300,
         "messages": [{
             "role": "user",
@@ -48,8 +48,10 @@ def analyze_pair(pair, api_key):
     response = requests.post("https://api.anthropic.com/v1/messages", headers=headers, json=data)
     result = response.json()
     print(f"API response: {result}")
+    if "content" in result:
     return result["content"][0]["text"]
-
+else:
+    return f"API Error: {result}"
 def run():
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     print(f"API key found: {api_key is not None}")
